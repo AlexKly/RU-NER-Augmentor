@@ -1,8 +1,10 @@
-from faker import Faker
 import typing, random, pymorphy2
 
-from src.attrs.attributes import INPUT_TAG_MAP, TAG_MAP, NOT_NER_TAG
-from src import COUNTRIES, REGIONS, CITIES, DISTRICTS
+from src import COUNTRIES, REGIONS, CITIES, DISTRICTS, STREETS, LAST_NAMES_MALE, LAST_NAMES_FEMALE, FIRST_NAMES_MALE, \
+    FIRST_NAMES_FEMALE, MIDDLE_NAMES_MALE, MIDDLE_NAMES_FEMALE
+from src.attrs.attributes import INPUT_TAG_MAP, TAG_MAP, NOT_NER_TAG, REPLACEMENT_MAP
+
+ANCHORS = [anchor for k in NOT_NER_TAG for anchor in NOT_NER_TAG[k]]
 
 
 class RUNERAugmentor:
@@ -16,7 +18,6 @@ class RUNERAugmentor:
         :return:
         """
         self.morph = pymorphy2.MorphAnalyzer(lang='ru')
-        self.fake = Faker(locale='ru')
         self.tagging_format = tagging_format
 
     def detect_case(self, s: str) -> typing.Tuple[str, str, str, str]:
@@ -51,13 +52,14 @@ class RUNERAugmentor:
         """
         tags = {tag for tag in tags if tag is not None}
         inflected_s = list()
+        s = ' '.join(list(filter(None, s.split(' '))))
         for token in s.split(' '):
             try:
                 inflected_s += [self.morph.parse(word=token)[0].inflect(required_grammemes=tags).word]
             except AttributeError:
                 inflected_s += [token]
         if casing:
-            inflected_s = [f'{w[0].upper()}{w[1:]}' for w in inflected_s]
+            inflected_s = [f'{w[0].upper()}{w[1:]}' if w not in ANCHORS else w for w in inflected_s]
         return ' '.join(inflected_s)
 
     @staticmethod
@@ -118,59 +120,132 @@ class RUNERAugmentor:
         """
         if entity == 'full_name':
             if inflecting_tags[2] == 'masc':
-                value = [
-                    (self.inflect(s=self.fake.last_name_male(), tags=set(inflecting_tags), casing=True), 'LAST_NAME'),
-                    (self.inflect(s=self.fake.first_name_male(), tags=set(inflecting_tags), casing=True), 'FIRST_NAME'),
-                    (self.inflect(s=self.fake.middle_name_male(), tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME'),
-                ]
+                ln = random.choice(seq=LAST_NAMES_MALE.keys())
+                fn = random.choice(seq=FIRST_NAMES_MALE.keys())
+                md = random.choice(seq=MIDDLE_NAMES_MALE.keys())
             if inflecting_tags[2] == 'femn':
+                ln = random.choice(seq=LAST_NAMES_FEMALE.keys())
+                fn = random.choice(seq=FIRST_NAMES_FEMALE.keys())
+                md = random.choice(seq=MIDDLE_NAMES_FEMALE.keys())
+            c = random.randint(a=0, b=6)
+            if c == 0:
                 value = [
-                    (self.inflect(s=self.fake.last_name_female(), tags=set(inflecting_tags), casing=True), 'LAST_NAME'),
-                    (self.inflect(s=self.fake.first_name_female(), tags=set(inflecting_tags), casing=True), 'FIRST_NAME'),
-                    (self.inflect(s=self.fake.middle_name_female(), tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME'),
+                    (self.inflect(s=ln, tags=set(inflecting_tags), casing=True), 'LAST_NAME'),
+                    (self.inflect(s=fn, tags=set(inflecting_tags), casing=True), 'FIRST_NAME'),
+                    (self.inflect(s=md, tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME'),
                 ]
+            if c == 1:
+                value = [
+                    (self.inflect(s=ln, tags=set(inflecting_tags), casing=True), 'LAST_NAME'),
+                    (self.inflect(s=fn, tags=set(inflecting_tags), casing=True), 'FIRST_NAME'),
+                ]
+            if c == 2:
+                value = [
+                    (self.inflect(s=fn, tags=set(inflecting_tags), casing=True), 'FIRST_NAME'),
+                    (self.inflect(s=md, tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME'),
+                ]
+            if c == 3:
+                value = [
+                    (self.inflect(s=ln, tags=set(inflecting_tags), casing=True), 'LAST_NAME'),
+                    (self.inflect(s=md, tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME'),
+                ]
+            if c == 4:
+                value = [(self.inflect(s=ln, tags=set(inflecting_tags), casing=True), 'LAST_NAME')]
+            if c == 5:
+                value = [(self.inflect(s=fn, tags=set(inflecting_tags), casing=True), 'FIRST_NAME')]
+            if c == 6:
+                value = [(self.inflect(s=md, tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME')]
             random.shuffle(x=value)
-        if entity == 'last_name':
-            if inflecting_tags[2] == 'masc':
-                value = [(self.inflect(s=self.fake.last_name_male(), tags=set(inflecting_tags), casing=True), 'LAST_NAME')]
-            if inflecting_tags[2] == 'femn':
-                value = [(self.inflect(s=self.fake.last_name_female(), tags=set(inflecting_tags), casing=True), 'LAST_NAME')]
-        if entity == 'first_name':
-            if inflecting_tags[2] == 'masc':
-                value = [(self.inflect(s=self.fake.first_name_male(), tags=set(inflecting_tags), casing=True), 'FIRST_NAME')]
-            if inflecting_tags[2] == 'femn':
-                value = [(self.inflect(s=self.fake.first_name_female(), tags=set(inflecting_tags), casing=True), 'FIRST_NAME')]
-        if entity == 'middle_name':
-            if inflecting_tags[2] == 'masc':
-                value = [(self.inflect(s=self.fake.middle_name_male(), tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME')]
-            if inflecting_tags[2] == 'femn':
-                value = [(self.inflect(s=self.fake.middle_name_female(), tags=set(inflecting_tags), casing=True), 'MIDDLE_NAME')]
-        if entity == 'address':
-            street = self.fake.street_address()
-            value = [
-                (random.choice(seq=[
-                    f'г. {random.choice(seq=CITIES.keys())}',
-                    f'г.{random.choice(seq=CITIES.keys())}',
-                    random.choice(seq=CITIES.keys())
-                ]), 'CITY'),
-                (street.split(',')[0].strip(), 'STREET'),
-                (street.split(',')[1].strip(), 'HOUSE'),
-                (self.fake.postcode(), 'O'),
-            ]
-        if entity == 'country':
-            value = [(self.inflect(s=random.choice(seq=COUNTRIES.keys()), tags=set(inflecting_tags), casing=True), 'COUNTRY')]
-        if entity == 'region':
-            value = [(self.inflect(s=random.choice(seq=REGIONS.keys()), tags=set(inflecting_tags), casing=True), 'REGION')]
-        if entity == 'city':
-            value = [(self.inflect(s=random.choice(seq=CITIES.keys()), tags=set(inflecting_tags), casing=True), 'CITY')]
-        if entity == 'district':
-            value = [(self.inflect(s=random.choice(seq=DISTRICTS.keys()), tags=set(inflecting_tags), casing=True), 'DISTRICT')]
-        if entity == 'street':
-            street = self.fake.street_address()
-            value = [
-                (f'{street.split(",")[0].strip().split(" ")[0].strip()} {self.inflect(s=street.split(",")[0].strip().split(" ")[-1].strip(), tags=set(inflecting_tags), casing=True)}', 'STREET'),
-                (street.split(',')[1].strip(), 'HOUSE')
-            ]
+        if entity in ['country', 'region', 'city', 'street', 'district', 'address']:
+            # General:
+            country = random.choice(seq=COUNTRIES.keys())
+            region = random.choice(seq=REGIONS.keys())
+            city = random.choice(seq=CITIES.keys())
+            district = random.choice(seq=DISTRICTS.keys())
+            street = random.choice(seq=STREETS.keys())
+            # Additional:
+            postcode = '{0:04}'.format(random.randint(a=0, b=999999))
+            prefix_house = ''.join([
+                random.choice(seq=['д', 'д.', 'д,', 'Д', 'Д.', 'Д,', 'дом', 'дом,', 'Дом', 'Дом,', 'стр', 'стр.',
+                                   'стр.', 'строение', ''])
+            ])
+            # д25 кв 61
+            num_house_1 = random.randint(a=1, b=999)
+            num_house_2 = random.randint(a=1, b=99)
+            num_house = random.choice(seq=[
+                num_house_1,
+                f'{num_house_1}/{num_house_2}'
+            ])
+            extra_num_house = f'{random.choice(seq=["офис", "оф.", "о.", "кв.", "квартира"])} {random.randint(a=1, b=999)}'
+            house = f'{prefix_house} {num_house} {random.choice(seq=["", extra_num_house])}'.strip()
+            cc = random.choice(seq=[0, 1, 2])
+            if cc == 1:
+                for anchor in NOT_NER_TAG['STREET']:
+                    street = street.replace(anchor, '')
+                street = street.strip()
+            if cc == 2:
+                for rplcmnt in REPLACEMENT_MAP['STREET']:
+                    street = street.replace(rplcmnt[0], rplcmnt[1])
+                street = street.strip()
+            if entity == 'country':
+                value = [(self.inflect(s=country, tags=set(inflecting_tags), casing=True), 'COUNTRY')]
+            if entity == 'region':
+                value = [(self.inflect(s=region, tags=set(inflecting_tags), casing=True), 'REGION')]
+            if entity == 'city':
+                value = [(self.inflect(s=city, tags=set(inflecting_tags), casing=True), 'CITY')]
+            if entity == 'district':
+                value = [(self.inflect(s=district, tags=set(inflecting_tags), casing=True), 'DISTRICT')]
+            if entity == 'street':
+                c = random.randint(a=0, b=1)
+                if c == 0:
+                    value = [(self.inflect(s=street, tags=set(inflecting_tags), casing=True), 'STREET')]
+                if c == 1:
+                    value = [
+                        (self.inflect(s=street, tags=set(inflecting_tags), casing=True), 'STREET'),
+                        (self.inflect(s=house, tags=set(inflecting_tags), casing=True), 'HOUSE'),
+                    ]
+            if entity == 'address':
+                c = random.randint(a=0, b=4)
+                if c == 0:
+                    value = [
+                        (postcode, 'O'),
+                        (random.choice(seq=['Россия', 'РФ', 'Российская Федерация']), 'COUNTRY'),
+                        (region, 'REGION'),
+                        (district, 'DISTRICT'),
+                        (city, 'CITY'),
+                        (street, 'STREET'),
+                        (house, 'HOUSE'),
+                    ]
+                if c == 1:
+                    value = [
+                        (street, 'STREET'),
+                        (house, 'HOUSE'),
+                        (city, 'CITY'),
+                        (postcode, 'O'),
+                    ]
+                if c == 2:
+                    value = [
+                        (street, 'STREET'),
+                        (house, 'HOUSE'),
+                        (city, 'CITY'),
+                    ]
+                if c == 3:
+                    value = [
+                        (street, 'STREET'),
+                        (house, 'HOUSE'),
+                        (city, 'CITY'),
+                        (region, 'REGION'),
+                        (postcode, 'O'),
+                    ]
+                if c == 4:
+                    value = [
+                        (street, 'STREET'),
+                        (house, 'HOUSE'),
+                        (city, 'CITY'),
+                        (district, 'DISTRICT'),
+                        (region, 'REGION'),
+                        (postcode, 'O'),
+                    ]
         return self.tagging(s=[p[0] for p in value], t=[p[1] for p in value])
 
     @staticmethod
@@ -206,7 +281,7 @@ class RUNERAugmentor:
         Transformation pipeline:\n
         * detect sub-tag (randomly)
         * define inflecting tags and cases (pymorphy2)
-        * generate new string based in sub-tag and inflecting tags (faker/vocabs)
+        * generate new string based in sub-tag and inflecting tags (vocabs)
         * relabelling tagging format (bilio, bio, single-token)
 
         :param s: Input string.
@@ -215,7 +290,7 @@ class RUNERAugmentor:
         """
         # Chose what type it needs to generate based on input ner-tag:
         if tag == INPUT_TAG_MAP['PERSON']:
-            tag = random.choice(seq=['full_name', 'last_name', 'first_name', 'middle_name'])
+            tag = 'full_name'
         if tag == INPUT_TAG_MAP['LOCATION']:
             tag = random.choice(seq=['address', 'country', 'region', 'city', 'district', 'street'])
         # Define tags and cases for input word/collocation which needs to be replaced:
