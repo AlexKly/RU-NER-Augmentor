@@ -1,0 +1,4 @@
+marisa-trie==0.8.0
+numpy==1.25.0
+pymorphy==0.9.1
+transliterate==1.10.2
