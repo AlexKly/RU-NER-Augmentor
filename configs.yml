@@ -1,0 +1,8 @@
+p_transformations:
+  original: 0.5
+  original_lowercase: 0.1
+  original_uppercase: 0.1
+  transliterated: 0.1
+  transliterated_lowercase: 0.1
+  transliterated_uppercase: 0.1
+seed: 42

@@ -1,11 +1,19 @@
-import os, marisa_trie
+import os, yaml, pathlib, marisa_trie
 
 from src.utils.set_seed import set_seed
 from src.utils.load_txt import load_txt
 
-_ROOT = os.path.dirname(__file__)
-DIR_VOCABS = f'{_ROOT}/vocabs'
+_ROOT = pathlib.Path(os.path.dirname(__file__)).parent
+DIR_SRC = _ROOT/'src'
+DIR_UTILS = DIR_SRC/'utils'
+DIR_VOCABS = DIR_SRC/'vocabs'
 
+
+# Load configs:
+with (_ROOT/'configs.yml').open('r') as f:
+    CONFIGS = yaml.safe_load(stream=f)
+
+# Load vocabs:
 COUNTRIES = marisa_trie.Trie(load_txt(path=f'{DIR_VOCABS}/location/countries.txt'))
 REGIONS = marisa_trie.Trie(load_txt(path=f'{DIR_VOCABS}/location/regions.txt'))
 CITIES = marisa_trie.Trie(load_txt(path=f'{DIR_VOCABS}/location/cities.txt'))

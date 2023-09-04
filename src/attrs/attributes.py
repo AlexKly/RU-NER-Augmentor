@@ -1,3 +1,6 @@
+from src import CONFIGS
+
+
 INPUT_TAG_MAP = {
     'LOCATION': 'LOC',
     'PERSON': 'PER',
@@ -41,10 +44,24 @@ NOT_NER_TAG = {
 REPLACEMENT_MAP = {
     'STREET': [('улица', 'ул.'), ('переулок', 'пер.'), ('проезд', 'пр-д'), ('площадь', 'пл.'), ('микрорайон', 'мкр.'),
                ('проспект', 'пр-т'), ('тупик', 'т.'), ('бульвар', 'б-р'), ('набережная', 'наб.'), ('аллея', 'алл.'),
-               ('мост', 'м.')]
+               ('мост', 'м.'), ('шоссе', 'ш.')]
 }
 
 TRANSFORMATION_CASES = (
-    ['orig', 'orig_lowercase', 'orig_uppercase', 'transliterated', 'transliterated_lowercase', 'transliterated_uppercase'],
-    [0.4, 0.12, 0.12, 0.12, 0.12, 0.12],
+    [
+        'orig',
+        'orig_lowercase',
+        'orig_uppercase',
+        'transliterated',
+        'transliterated_lowercase',
+        'transliterated_uppercase',
+    ],
+    [
+        CONFIGS['p_transformations']['original'],
+        CONFIGS['p_transformations']['original_lowercase'],
+        CONFIGS['p_transformations']['original_uppercase'],
+        CONFIGS['p_transformations']['transliterated'],
+        CONFIGS['p_transformations']['transliterated_lowercase'],
+        CONFIGS['p_transformations']['transliterated_uppercase'],
+    ],
 )
