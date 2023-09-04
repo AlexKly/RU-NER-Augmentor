@@ -1,5 +1,6 @@
 import os, marisa_trie
 
+from src.utils.set_seed import set_seed
 from src.utils.load_txt import load_txt
 
 _ROOT = os.path.dirname(__file__)
@@ -16,3 +17,6 @@ FIRST_NAMES_MALE = marisa_trie.Trie(load_txt(path=f'{DIR_VOCABS}/names/first_nam
 FIRST_NAMES_FEMALE = marisa_trie.Trie(load_txt(path=f'{DIR_VOCABS}/names/first_names_female.txt'))
 MIDDLE_NAMES_MALE = marisa_trie.Trie(load_txt(path=f'{DIR_VOCABS}/names/middle_names_male.txt'))
 MIDDLE_NAMES_FEMALE = marisa_trie.Trie(load_txt(path=f'{DIR_VOCABS}/names/middle_names_female.txt'))
+
+# Set unite seed for all project:
+set_seed(seed=CONFIGS['seed'])
