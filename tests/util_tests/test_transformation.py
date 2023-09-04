@@ -1,3 +1,5 @@
+import pytest
+
 from src.utils.transformation import transform
 
 test_sample = 'Задача NLP - извлечении именованных сущностей (NER)'
@@ -28,18 +30,18 @@ def test_transform_transliterating():
     assert transform(
         tokens=test_sample.split(' '),
         transformation_case='transliterated'
-    ) == ['ЗАДАЧА', 'NLP', '-', 'ИЗВЛЕЧЕНИИ', 'ИМЕНОВАННЫХ', 'СУЩНОСТЕЙ', '(NER)']
+    ) == ['Zadacha', 'NLP', '-', 'izvlechenii', 'imenovannyh', 'suschnostej', '(NER)']
 
 
 def test_transform_transliterated_and_lowercase():
     assert transform(
         tokens=test_sample.split(' '),
         transformation_case='transliterated_lowercase'
-    ) == ['ЗАДАЧА', 'NLP', '-', 'ИЗВЛЕЧЕНИИ', 'ИМЕНОВАННЫХ', 'СУЩНОСТЕЙ', '(NER)']
+    ) == ['zadacha', 'nlp', '-', 'izvlechenii', 'imenovannyh', 'suschnostej', '(ner)']
 
 
 def test_transform_transliterated_and_uppercase():
     assert transform(
         tokens=test_sample.split(' '),
         transformation_case='transliterated_uppercase'
-    ) == ['ЗАДАЧА', 'NLP', '-', 'ИЗВЛЕЧЕНИИ', 'ИМЕНОВАННЫХ', 'СУЩНОСТЕЙ', '(NER)']
+    ) == ['ZADAChA', 'NLP', '-', 'IZVLEChENII', 'IMENOVANNYH', 'SUSchNOSTEJ', '(NER)']
