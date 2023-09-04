@@ -8,8 +8,20 @@ ANCHORS = [anchor for k in NOT_NER_TAG for anchor in NOT_NER_TAG[k]]
 
 
 class RUNERAugmentor:
-    """
-
+    """ RU-NER Augmentor performs augmentation for input pair text-token and helps to dilute your dataset various
+    russian constructions for training NER-model (or with additional transformations for different task, for example,
+    text classification).\n\n
+    This class can return augmented tokens and tagging with settings preset in file configurations (attrs).\n\n
+    You can specify tagging format for class. It's possible BIOLU, BIO and single-token tagging format.\n\n
+    Class supports only two NER-tag for augmentation: PER and LOC.\n\n
+    PER tag splits into following sub-tags for generation: LAST_NAME, FIRST_NAME and MIDDLE_NAME.\n\n
+    LOC tag splits into following sub-tags for generation: COUNTRY, REGION, CITY, DISTRICT, STREET and HOUSE.\n\n
+    Usage example:\n
+    aug = RUNERAugmentor()\n
+    print(aug.augment(s=['Иванов'], tag='PER'))\n
+    >>> ([], [])
+    print(aug.augment(s=['Москве'], tag='LOC'))\n
+    >>> ([], [])
     """
     def __init__(self, tagging_format: str = 'BIOLU') -> None:
         """ Create 'RUNERAugmentor' object class.
@@ -21,10 +33,10 @@ class RUNERAugmentor:
         self.tagging_format = tagging_format
 
     def detect_case(self, s: str) -> typing.Tuple[str, str, str, str]:
-        """
+        """ Detect input string (word) case (for pymorphy2 lib.) for correct transformation.
 
-        :param s:
-        :return:
+        :param s: Input string (word).
+        :return: Detected case tags for transformation.
         """
         cases = {
             'pos': 'NOUN',
@@ -68,7 +80,7 @@ class RUNERAugmentor:
 
         :param s: Input string.
         :param t: Original tags.
-        :return: NER-
+        :return: Tokens and NER-tags.
         """
         tokens, tags = list(), list()
         for p in zip(s, t):

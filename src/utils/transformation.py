@@ -5,11 +5,17 @@ from src.attrs.attributes import TRANSFORMATION_CASES
 
 
 def transform(tokens: list, transformation_case: str = None) -> list:
-    """
+    """ Transform input tokens to:
+        * original (no transformations)
+        * lowercase
+        * uppercase
+        * transliterating
+        * transliterating + lowercase
+        * transliterating + uppercase
 
-    :param tokens:
-    :param transformation_case:
-    :return:
+    :param tokens: Input tokens.
+    :param transformation_case: Type of transformations (can be None, then it will be chosen random).
+    :return: Transformed tokens.
     """
     if transformation_case is None or transformation_case not in TRANSFORMATION_CASES[0]:
         case = np.random.choice(a=TRANSFORMATION_CASES[0], p=TRANSFORMATION_CASES[1])
