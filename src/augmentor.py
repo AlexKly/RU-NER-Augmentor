@@ -53,6 +53,19 @@ class RUNERAugmentor:
         )
         return tags
 
+    @staticmethod
+    def replace_suffix(entity: str, label: str) -> str:
+        """ Apply replacing suffix to entity according to input label (replacing is random function).
+
+        :param entity: Input entity (string).
+        :param label: Input label (for replacement group).
+        :return: Applied to entity random replacement from replacement map.
+        """
+        for rplcmnt in REPLACEMENT_MAP[label]:
+            entity = entity.replace(rplcmnt[0], rplcmnt[1])
+            entity = random.choice(seq=[entity, entity.replace('.', '')])
+        return entity.strip()
+
     def inflect(self, s: str, tags: typing.Set[str], casing: bool = True) -> str:
         """ Do inflection for input string according right form in text.
         If string has more than 1 word function tries to match common inflection to all words in string.
@@ -71,7 +84,10 @@ class RUNERAugmentor:
             except AttributeError:
                 inflected_s += [token]
         if casing:
-            inflected_s = [f'{w[0].upper()}{w[1:]}' if w not in ANCHORS else w for w in inflected_s]
+            if 'улица' in inflected_s:
+                inflected_s = [f'{w[0].upper()}{w[1:]}' if w.lower != 'улица' else w for w in inflected_s]
+            else:
+                inflected_s = [f'{w[0].upper()}{w[1:]}' if w not in ANCHORS else w for w in inflected_s]
         return ' '.join(inflected_s)
 
     @staticmethod
@@ -196,9 +212,9 @@ class RUNERAugmentor:
                     street = street.replace(anchor, '')
                 street = street.strip()
             if cc == 2:
-                for rplcmnt in REPLACEMENT_MAP['STREET']:
-                    street = street.replace(rplcmnt[0], rplcmnt[1])
-                street = street.strip()
+                region = self.replace_suffix(entity=region, label='REGION')
+                district = self.replace_suffix(entity=district, label='DISTRICT')
+                street = self.replace_suffix(entity=street, label='STREET')
             if entity == 'country':
                 value = [(self.inflect(s=country, tags=set(inflecting_tags), casing=True), 'COUNTRY')]
             if entity == 'region':
